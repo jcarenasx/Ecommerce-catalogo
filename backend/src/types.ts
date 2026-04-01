@@ -1,10 +1,12 @@
 import type {
+  AvailabilityTag as PrismaAvailabilityTag,
   Product as PrismaProduct,
   User as PrismaUser,
 } from "@prisma/client";
 
 export type User = PrismaUser;
 export type Product = PrismaProduct;
+export type AvailabilityTag = PrismaAvailabilityTag;
 export type PublicUser = Omit<User, "passwordHash">;
 
 export type ProductInput = {
@@ -20,4 +22,5 @@ export type ProductInput = {
   paymentLinkWithShipping?: string | null;
   paymentLinkWithoutShipping?: string | null;
   active?: boolean;
+  availabilityTagId?: string | null;
 };

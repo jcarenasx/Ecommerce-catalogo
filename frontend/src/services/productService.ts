@@ -27,6 +27,8 @@ function normalizeProduct(product: ProductApiRecord): Product {
     paymentLinkWithShipping: product.paymentLinkWithShipping ?? null,
     paymentLinkWithoutShipping: product.paymentLinkWithoutShipping ?? null,
     active: product.active ?? true,
+    availabilityTag: product.availabilityTag ?? null,
+    availabilityTagId: product.availabilityTagId ?? null,
     createdAt: product.createdAt ?? "",
     updatedAt: product.updatedAt ?? "",
   };
@@ -44,6 +46,7 @@ function normalizeInput(input: ProductInput): ProductInput {
     category: normalizeOptionalText(input.category),
     brand: normalizeOptionalText(input.brand),
     images: normalizeImageList(input.images),
+    availabilityTagId: normalizeOptionalText(input.availabilityTagId),
   };
 }
 

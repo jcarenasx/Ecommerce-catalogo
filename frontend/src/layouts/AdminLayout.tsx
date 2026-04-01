@@ -1,8 +1,16 @@
 import { Link, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!copyFeedback) return;
+    const timeout = window.setTimeout(() => setCopyFeedback(null), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [copyFeedback]);
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
@@ -18,6 +26,37 @@ export default function AdminLayout() {
               className="rounded-xl bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15"
             >
               Catálogo privado
+            </Link>
+            <Link
+              to="/admin/availability"
+              className="rounded-xl bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15"
+            >
+              Etiquetas de disponibilidad
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator?.clipboard) return;
+                const baseUrl = `${window.location.origin}`;
+                const message = `Tenemos nuevos productos disponibles en el catálogo 👇\n${baseUrl}`;
+                navigator.clipboard.writeText(message).then(() => {
+                  setCopyFeedback("Mensaje copiado");
+                });
+              }}
+              className="rounded-xl bg-white/10 px-4 py-3 text-left text-sm font-medium transition hover:bg-white/15"
+            >
+              Enviar notificación
+            </button>
+            {copyFeedback && (
+              <p className="text-[0.65rem] uppercase tracking-[0.3em] text-emerald-400">
+                {copyFeedback}
+              </p>
+            )}
+            <Link
+              to="/admin/customers"
+              className="rounded-xl bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15"
+            >
+              Clientes
             </Link>
           </nav>
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-4">

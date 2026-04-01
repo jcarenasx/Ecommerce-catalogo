@@ -36,8 +36,19 @@ model Product {
   active                     Boolean    @default(true)
   createdAt                  DateTime   @default(now())
   updatedAt                  DateTime   @updatedAt
+  availabilityTagId          String?    @map("availability_tag_id")
+  availabilityTag            AvailabilityTag? @relation(fields: [availabilityTagId], references: [id])
 
   cartItems                  CartItem[]
+}
+
+model AvailabilityTag {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  products  Product[]
 }
 
 model CartItem {
@@ -76,6 +87,13 @@ model OrderItem {
   createdAt  DateTime @default(now())
 
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
 }
 
 enum UserRole {

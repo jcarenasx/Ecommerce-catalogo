@@ -22,6 +22,7 @@ const baseProductSchema = z.object({
   brand: optionalText(120),
   images: imagesSchema,
   active: z.boolean().optional(),
+  availabilityTagId: optionalText(60),
 });
 
 const createSchema = baseProductSchema;

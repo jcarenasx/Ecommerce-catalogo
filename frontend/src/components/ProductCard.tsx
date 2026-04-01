@@ -4,8 +4,8 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
-  type TouchEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type TouchEvent as ReactTouchEvent,
 } from "react";
 import type { Product } from "../types";
 import { buildWhatsAppUrl } from "../lib/whatsapp";
@@ -28,39 +28,44 @@ export default function ProductCard({ product }: ProductProps) {
   const displayName = product.name?.trim() || product.model;
   const sizeLabel = product.size?.trim() || "—";
   const colorLabel = product.color?.trim() || "—";
+
   const normalizedImages = useMemo(() => {
     const list = Array.isArray(product.images)
       ? product.images.filter((item) => typeof item === "string" && item.trim() !== "")
       : [];
     return list.length > 0 ? list : [PLACEHOLDER_IMAGE];
   }, [product.images]);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const normalizedImagesRef = useRef(normalizedImages);
   const touchStartX = useRef<number | null>(null);
   const modalTouchStartX = useRef<number | null>(null);
   const didSwipeRef = useRef(false);
+
   const hasMultipleImages = normalizedImages.length > 1;
 
   useEffect(() => {
-    if (normalizedImagesRef.current === normalizedImages) {
-      return;
-    }
+    if (normalizedImagesRef.current === normalizedImages) return;
     normalizedImagesRef.current = normalizedImages;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentImageIndex(0);
   }, [normalizedImages]);
 
   useEffect(() => {
     if (!isModalOpen) return undefined;
+
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const handleKeyDown = (event: KeyboardEvent) => {
+
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsModalOpen(false);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = originalOverflow;
@@ -75,15 +80,17 @@ export default function ProductCard({ product }: ProductProps) {
     setCurrentImageIndex((prev) => (prev - 1 + normalizedImages.length) % normalizedImages.length);
   }, [normalizedImages.length]);
 
-  const handleTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = useCallback((event: ReactTouchEvent<HTMLDivElement>) => {
     touchStartX.current = event.touches[0].clientX;
     didSwipeRef.current = false;
   }, []);
 
   const handleTouchEnd = useCallback(
-    (event: TouchEvent<HTMLDivElement>) => {
+    (event: ReactTouchEvent<HTMLDivElement>) => {
       if (touchStartX.current === null) return;
+
       const delta = touchStartX.current - event.changedTouches[0].clientX;
+
       if (Math.abs(delta) > 30) {
         didSwipeRef.current = true;
         if (delta > 0) {
@@ -92,19 +99,22 @@ export default function ProductCard({ product }: ProductProps) {
           goPrevImage();
         }
       }
+
       touchStartX.current = null;
     },
     [goNextImage, goPrevImage]
   );
 
-  const handleModalTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
+  const handleModalTouchStart = useCallback((event: ReactTouchEvent<HTMLDivElement>) => {
     modalTouchStartX.current = event.touches[0].clientX;
   }, []);
 
   const handleModalTouchEnd = useCallback(
-    (event: TouchEvent<HTMLDivElement>) => {
+    (event: ReactTouchEvent<HTMLDivElement>) => {
       if (modalTouchStartX.current === null) return;
+
       const delta = modalTouchStartX.current - event.changedTouches[0].clientX;
+
       if (Math.abs(delta) > 30) {
         if (delta > 0) {
           goNextImage();
@@ -112,6 +122,7 @@ export default function ProductCard({ product }: ProductProps) {
           goPrevImage();
         }
       }
+
       modalTouchStartX.current = null;
     },
     [goNextImage, goPrevImage]
@@ -125,7 +136,7 @@ export default function ProductCard({ product }: ProductProps) {
     setIsModalOpen(true);
   };
 
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleCardKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       setIsModalOpen(true);
@@ -146,7 +157,7 @@ export default function ProductCard({ product }: ProductProps) {
         onKeyDown={handleCardKeyDown}
       >
         <div
-          className="relative h-52 flex basis-3/4 items-center justify-center overflow-hidden rounded-t-2xl bg-white group"
+          className="group relative flex h-52 basis-3/4 items-center justify-center overflow-hidden rounded-t-2xl bg-white"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -154,8 +165,9 @@ export default function ProductCard({ product }: ProductProps) {
             src={normalizedImages[currentImageIndex]}
             alt={displayName}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-300 ease-out transform md:group-hover:scale-110"
+            className="h-full w-full object-cover transition duration-300 ease-out md:group-hover:scale-110"
           />
+
           {hasMultipleImages && (
             <>
               <button
@@ -165,10 +177,11 @@ export default function ProductCard({ product }: ProductProps) {
                   event.stopPropagation();
                   goPrevImage();
                 }}
-                className="pointer-events-auto hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/60 bg-black/40 px-3 py-1 text-xl font-bold text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100"
+                className="pointer-events-auto absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/60 bg-black/40 px-3 py-1 text-xl font-bold text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100 md:flex"
               >
                 ‹
               </button>
+
               <button
                 type="button"
                 aria-label="Imagen siguiente"
@@ -176,7 +189,7 @@ export default function ProductCard({ product }: ProductProps) {
                   event.stopPropagation();
                   goNextImage();
                 }}
-                className="pointer-events-auto hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/60 bg-black/40 px-3 py-1 text-xl font-bold text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100"
+                className="pointer-events-auto absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/60 bg-black/40 px-3 py-1 text-xl font-bold text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100 md:flex"
               >
                 ›
               </button>
@@ -185,13 +198,21 @@ export default function ProductCard({ product }: ProductProps) {
         </div>
 
         <div className="flex basis-1/4 flex-col gap-1 px-5 pb-5 pt-4">
-          <h3 className="text-base font-semibold text-slate-900">{displayName}</h3>
-          <p className="text-sm text-slate-600">Tallas: {sizeLabel}</p>
-          <p className="text-sm text-slate-600">Color: {colorLabel}</p>
-          <p className="text-sm font-semibold text-slate-900">
-            Precio: {formatCurrency(product.priceCents ?? 0)}
-          </p>
-        </div>
+  <h3 className="text-base font-semibold text-slate-900">{displayName}</h3>
+
+  
+{product.availabilityTag && (
+  <p className="text-xs font-semibold text-slate-500 uppercase">
+  {product.availabilityTag.name}
+</p>
+)}
+
+  <p className="text-sm text-slate-600">Tallas: {sizeLabel}</p>
+  <p className="text-sm text-slate-600">Color: {colorLabel}</p>
+  <p className="text-sm font-semibold text-slate-900">
+    Precio: {formatCurrency(product.priceCents ?? 0)}
+  </p>
+</div>
       </div>
 
       {isModalOpen && (
@@ -210,8 +231,9 @@ export default function ProductCard({ product }: ProductProps) {
             >
               ×
             </button>
+
             <div
-              className="relative h-full min-h-[50vh] flex-1 overflow-hidden rounded-2xl bg-white group"
+              className="group relative h-full min-h-[50vh] flex-1 overflow-hidden rounded-2xl bg-white"
               onTouchStart={handleModalTouchStart}
               onTouchEnd={handleModalTouchEnd}
             >
@@ -221,6 +243,7 @@ export default function ProductCard({ product }: ProductProps) {
                 className="h-full w-full object-contain"
                 loading="lazy"
               />
+
               {hasMultipleImages && (
                 <>
                   <button
@@ -230,10 +253,11 @@ export default function ProductCard({ product }: ProductProps) {
                       event.stopPropagation();
                       goPrevImage();
                     }}
-                    className="pointer-events-auto hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white/90 px-2 py-2 text-xl font-bold text-slate-800 opacity-0 transition hover:bg-white group-hover:opacity-100"
+                    className="pointer-events-auto absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white/90 px-2 py-2 text-xl font-bold text-slate-800 opacity-0 transition hover:bg-white group-hover:opacity-100 md:flex"
                   >
                     ‹
                   </button>
+
                   <button
                     type="button"
                     aria-label="Imagen siguiente"
@@ -241,13 +265,14 @@ export default function ProductCard({ product }: ProductProps) {
                       event.stopPropagation();
                       goNextImage();
                     }}
-                    className="pointer-events-auto hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white/90 px-2 py-2 text-xl font-bold text-slate-800 opacity-0 transition hover:bg-white group-hover:opacity-100"
+                    className="pointer-events-auto absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white/90 px-2 py-2 text-xl font-bold text-slate-800 opacity-0 transition hover:bg-white group-hover:opacity-100 md:flex"
                   >
                     ›
                   </button>
                 </>
               )}
             </div>
+
             <div className="flex flex-col gap-4">
               <p className="text-xs uppercase tracking-[0.4em] text-slate-500">{displayName}</p>
               <a

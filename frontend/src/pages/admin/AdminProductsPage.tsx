@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { ApiError } from "../../api/client";
 import Button from "../../components/ui/Button";
@@ -6,6 +6,8 @@ import Loader from "../../components/ui/Loader";
 import Pill from "../../components/ui/Pill";
 import { useAdminProducts } from "../../hooks/useAdminProducts";
 import { useAdminProductList } from "../../hooks/useAdminProductList";
+import { useAvailabilityTags } from "../../hooks/useAvailabilityTags";
+import { useAdminAvailabilityTags } from "../../hooks/useAdminAvailabilityTags";
 import { useProductCategories } from "../../hooks/useProductCategories";
 import type { Product, ProductInput } from "../../types";
 import { uploadGalleryImages } from "../../services/mediaService";
@@ -26,6 +28,7 @@ type ProductFormState = {
   paymentLinkWithoutShipping: string;
   images: string[];
   active: boolean;
+  availabilityTagId: string;
 };
 
 const EMPTY_FORM: ProductFormState = {
@@ -41,12 +44,14 @@ const EMPTY_FORM: ProductFormState = {
   paymentLinkWithoutShipping: "",
   images: [],
   active: true,
+  availabilityTagId: "",
 };
 
 const createEmptyFormState = (): ProductFormState => ({
   ...EMPTY_FORM,
   images: [],
   active: true,
+  availabilityTagId: "",
 });
 
 function toNullable(value: string): string | null {
@@ -72,6 +77,7 @@ const mapFormToInput = (state: ProductFormState): ProductInput => {
     brand: toNullable(state.brand),
     images: state.images,
     active: state.active,
+    availabilityTagId: state.availabilityTagId.trim() === "" ? null : state.availabilityTagId,
   };
 };
 
@@ -108,6 +114,13 @@ export default function AdminProductsPage() {
     limit: ITEMS_PER_PAGE,
     offset: currentOffset,
   });
+  const {
+    data: availabilityTags = [],
+    isLoading: availabilityTagsLoading,
+    isError: availabilityTagsLoadError,
+    error: availabilityTagsErrorValue,
+  } = useAvailabilityTags();
+  const { createTag } = useAdminAvailabilityTags();
   const products = data?.products ?? [];
   const totalProducts = data?.total ?? 0;
   const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / ITEMS_PER_PAGE) : 1;
@@ -121,6 +134,9 @@ export default function AdminProductsPage() {
   const [imageInputValue, setImageInputValue] = useState("");
   const [togglingProductModel, setTogglingProductModel] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [availabilityTagNameInput, setAvailabilityTagNameInput] = useState("");
+  const [availabilityTagFeedback, setAvailabilityTagFeedback] = useState<string | null>(null);
+  const [availabilityTagError, setAvailabilityTagError] = useState<string | null>(null);
 
   const resetForm = () => {
     setEditingProductModel(null);
@@ -128,6 +144,9 @@ export default function AdminProductsPage() {
     setFormError(null);
     setUploadError(null);
     setImageInputValue("");
+    setAvailabilityTagFeedback(null);
+    setAvailabilityTagError(null);
+    setAvailabilityTagNameInput("");
   };
 
   const handleCategoryFilter = (category: string | null) => {
@@ -176,9 +195,12 @@ export default function AdminProductsPage() {
       paymentLinkWithoutShipping: product.paymentLinkWithoutShipping ?? "",
       images: product.images ?? [],
       active: product.active ?? true,
+      availabilityTagId: product.availabilityTag?.id ?? "",
     });
     setFormError(null);
     setUploadError(null);
+    setAvailabilityTagFeedback(null);
+    setAvailabilityTagError(null);
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   };
 
@@ -210,8 +232,32 @@ export default function AdminProductsPage() {
       } else {
         setFormError("No se pudo actualizar la visibilidad del producto.");
       }
-    } finally {
-      setTogglingProductModel(null);
+  } finally {
+    setTogglingProductModel(null);
+  }
+};
+
+  const handleCreateAvailabilityTag = async () => {
+    setAvailabilityTagFeedback(null);
+    setAvailabilityTagError(null);
+
+    const trimmed = availabilityTagNameInput.trim();
+    if (trimmed === "") {
+      setAvailabilityTagError("Escribe el nombre de la etiqueta antes de crearla.");
+      return;
+    }
+
+    try {
+      const tag = await createTag.mutateAsync(trimmed);
+      setFormState((current) => ({ ...current, availabilityTagId: tag.id }));
+      setAvailabilityTagFeedback("Etiqueta creada y seleccionada.");
+      setAvailabilityTagNameInput("");
+    } catch (mutationError) {
+      if (mutationError instanceof ApiError) {
+        setAvailabilityTagError(mutationError.message);
+      } else {
+        setAvailabilityTagError("No se pudo crear la etiqueta.");
+      }
     }
   };
 
@@ -241,7 +287,7 @@ export default function AdminProductsPage() {
     const fileList = event.target.files;
     if (!fileList || fileList.length === 0) return;
 
-    const files = Array.from(fileList);
+    const files = Array.from(fileList) as File[];
     const invalidType = files.find((file) => !ACCEPTED_IMAGE_TYPES.includes(file.type));
     if (invalidType) {
       setUploadError("Solo se admiten imágenes .jpg, .png, .webp o .avif.");
@@ -627,6 +673,40 @@ export default function AdminProductsPage() {
               </label>
 
               <label className="block">
+                <span className="mb-1 block text-sm font-medium text-stone-700">Disponibilidad</span>
+                <select
+                  value={formState.availabilityTagId}
+                  onChange={(event) => {
+                    setFormState((current) => ({
+                      ...current,
+                      availabilityTagId: event.target.value,
+                    }));
+                    setAvailabilityTagFeedback(null);
+                    setAvailabilityTagError(null);
+                  }}
+                  disabled={availabilityTagsLoading}
+                  className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-900 outline-none transition focus:border-stone-500 disabled:cursor-not-allowed disabled:bg-stone-50"
+                >
+                  <option value="">Sin etiqueta</option>
+                  {availabilityTags.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+                {availabilityTagsLoading && (
+                  <p className="mt-1 text-xs text-stone-500">Cargando etiquetas...</p>
+                )}
+                {availabilityTagsLoadError && (
+                  <p className="mt-1 text-xs text-rose-600">
+                    {availabilityTagsErrorValue instanceof Error
+                      ? availabilityTagsErrorValue.message
+                      : "No se pudieron cargar las etiquetas."}
+                  </p>
+                )}
+              </label>
+
+              <label className="block">
                 <span className="mb-1 block text-sm font-medium text-stone-700">SKU</span>
                 <input
                   type="text"
@@ -689,7 +769,40 @@ export default function AdminProductsPage() {
                 />
               </label>
 
-              <div className="space-y-4">
+            <div className="space-y-3 border-b border-stone-100 pb-4">
+              <p className="text-sm font-medium text-stone-700">
+                ¿No ves la etiqueta adecuada?
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={availabilityTagNameInput}
+                  onChange={(event) => {
+                    setAvailabilityTagNameInput(event.target.value);
+                    setAvailabilityTagFeedback(null);
+                    setAvailabilityTagError(null);
+                  }}
+                  disabled={createTag.isPending}
+                  className="flex-1 min-w-[200px] rounded-2xl border border-stone-300 px-4 py-2.5 text-sm text-stone-900 outline-none transition focus:border-stone-500 disabled:cursor-not-allowed disabled:bg-stone-50"
+                  placeholder="Escribe un nombre y crea la etiqueta"
+                />
+                <Button
+                  variant="ghost"
+                  type="button"
+                  onClick={handleCreateAvailabilityTag}
+                  disabled={createTag.isPending}
+                >
+                  {createTag.isPending ? "Creando etiqueta..." : "Crear etiqueta"}
+                </Button>
+              </div>
+              {availabilityTagFeedback && (
+                <p className="text-xs text-emerald-700">{availabilityTagFeedback}</p>
+              )}
+              {availabilityTagError && (
+                <p className="text-xs text-rose-700">{availabilityTagError}</p>
+              )}
+            </div>
+            <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-stone-700">URLs de imágenes</span>

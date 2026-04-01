@@ -7,6 +7,8 @@ import authRouter from "./routes/auth";
 import productsRouter from "./routes/products";
 import cartRouter from "./routes/cart";
 import mediaRouter from "./routes/media";
+import availabilityRouter from "./routes/availability";
+import customersRouter from "./routes/customers";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -23,6 +25,8 @@ app.use("/auth", authRouter);
 app.use("/products", productsRouter);
 app.use("/cart", cartRouter);
 app.use("/media", mediaRouter);
+app.use("/availability", availabilityRouter);
+app.use("/customers", customersRouter);
 app.use(errorHandler);
 
 async function startServer() {

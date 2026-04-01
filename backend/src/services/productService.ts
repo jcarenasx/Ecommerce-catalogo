@@ -74,6 +74,7 @@ export const productService = {
       images,
       active: input.active ?? true,
       brand: input.brand ?? null,
+      availabilityTagId: input.availabilityTagId ?? null,
     };
     return productRepository.create(payload);
   },
@@ -97,6 +98,9 @@ export const productService = {
     }
     if (typeof input.active === "boolean") {
       updatePayload.active = input.active;
+    }
+    if ("availabilityTagId" in input) {
+      updatePayload.availabilityTagId = input.availabilityTagId ?? null;
     }
     return productRepository.update(model, updatePayload);
   },

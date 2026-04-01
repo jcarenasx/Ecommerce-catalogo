@@ -10,38 +10,59 @@ export type ProductFindManyOptions = {
   offset?: number;
 };
 
-function normalizeImages(product: Product): Product {
+function normalizeProduct(product: Product): Product {
   return {
     ...product,
     images: product.images ?? [],
     brand: product.brand ?? null,
+    availabilityTag: product.availabilityTag ?? null,
   };
 }
 
 function wrapProduct(product: Product): Product {
-  return normalizeImages(product);
+  return normalizeProduct(product);
 }
+
+const defaultProductInclude = {
+  availabilityTag: true,
+};
 
 export const productRepository = {
   create(data: Prisma.ProductCreateInput): Promise<Product> {
-    return prisma.product.create({ data }).then(wrapProduct);
+    return prisma.product
+      .create({
+        data,
+        include: defaultProductInclude,
+      })
+      .then(wrapProduct);
   },
 
   update(model: string, data: Prisma.ProductUpdateInput): Promise<Product> {
-    return prisma.product.update({
-      where: { model },
-      data,
-    }).then(wrapProduct);
+    return prisma.product
+      .update({
+        where: { model },
+        data,
+        include: defaultProductInclude,
+      })
+      .then(wrapProduct);
   },
 
   delete(model: string): Promise<Product> {
-    return prisma.product.delete({ where: { model } }).then(wrapProduct);
+    return prisma.product
+      .delete({
+        where: { model },
+        include: defaultProductInclude,
+      })
+      .then(wrapProduct);
   },
 
   findUnique(model: string): Promise<Product | null> {
     return prisma.product
-      .findUnique({ where: { model } })
-      .then((product) => (product ? normalizeImages(product) : null));
+      .findUnique({
+        where: { model },
+        include: defaultProductInclude,
+      })
+      .then((product) => (product ? normalizeProduct(product) : null));
   },
 
   findMany(options: ProductFindManyOptions): Promise<{ products: Product[]; total: number }> {
@@ -69,6 +90,7 @@ export const productRepository = {
     const queryArgs: Prisma.ProductFindManyArgs = {
       where,
       orderBy: { model: "asc" },
+      include: defaultProductInclude,
     };
     if (typeof options.offset === "number") {
       queryArgs.skip = options.offset;
@@ -81,7 +103,7 @@ export const productRepository = {
       prisma.product.findMany(queryArgs),
       prisma.product.count({ where }),
     ]).then(([products, total]) => ({
-      products: products.map(normalizeImages),
+      products: products.map(normalizeProduct),
       total,
     }));
   },

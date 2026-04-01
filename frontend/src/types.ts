@@ -16,6 +16,13 @@ export type User = {
   updatedAt: string;
 };
 
+export type AvailabilityTag = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Product = {
   name: string;
   size: string | null;
@@ -29,6 +36,8 @@ export type Product = {
   paymentLinkWithShipping: string | null;
   paymentLinkWithoutShipping: string | null;
   active: boolean;
+  availabilityTag?: AvailabilityTag | null;
+  availabilityTagId?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -46,6 +55,7 @@ export type ProductInput = {
   paymentLinkWithShipping?: string | null;
   paymentLinkWithoutShipping?: string | null;
   active?: boolean;
+  availabilityTagId?: string | null;
 };
 
 export type LoginInput = {

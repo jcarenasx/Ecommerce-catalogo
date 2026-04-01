@@ -5,6 +5,8 @@ import { useAuth } from "./context/useAuth";
 import AdminLayout from "./layouts/AdminLayout";
 import Home from "./pages/Home";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminAvailabilityPage from "./pages/admin/AdminAvailabilityPage";
+import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 
 import AccessDenied from "./components/AccessDenied";
@@ -50,6 +52,8 @@ function App() {
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="products" element={<AdminProductsPage />} />
+              <Route path="availability" element={<AdminAvailabilityPage />} />
+              <Route path="customers" element={<AdminCustomersPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
