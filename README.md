@@ -2,38 +2,80 @@
 
 Estas son las instrucciones clave para mantener en producción el backend (`api.aweshopmx.com`) y el frontend (`www.aweshopmx.com`).
 
+## Estado actual
+- Backend activo en `https://api.aweshopmx.com`
+- Frontend activo en `https://www.aweshopmx.com`
+- Dominio raíz `https://aweshopmx.com` redirige a `https://www.aweshopmx.com`
+- Login/admin funcionando con sesión persistente
+- Subida de imágenes a S3 pendiente de terminar; por ahora se puede seguir usando URLs externas
+
 ## Backend en Elastic Beanstalk
-- `NODE_ENV` debe quedar en `production` y `DATABASE_URL`, `JWT_ACCESS_SECRET`, `COOKIE_NAME`/`COOKIE_SECURE`/`COOKIE_SAME_SITE` y `TRUST_PROXY` configurados con los valores del entorno real. Estos se editan desde el panel de Elastic Beanstalk (`Configuration > Software`).
-- El listener HTTPS se configura en EC2 > Load Balancers (agregar `HTTPS:443` con certificado ACM y security group permitiendo 443). El health `/health` debe devolver `{ "environment":"production" }`.
-- Para crear un admin ejecuta `ADMIN_EMAIL=<x> ADMIN_PASSWORD=<segura> npx tsx backend/scripts/createAdmin.ts`. El script también se puede ejecutar dentro del entorno con las variables exportadas.
+- En `Configuration > Software` deben existir al menos estas variables:
+  - `NODE_ENV=production`
+  - `DATABASE_URL=...`
+  - `JWT_ACCESS_SECRET=...`
+  - `WEB_ORIGINS=https://www.aweshopmx.com,https://aweshopmx.com`
+  - `COOKIE_NAME=ecom_access`
+  - `COOKIE_SECURE=true`
+  - `COOKIE_SAME_SITE=none`
+  - `TRUST_PROXY=1`
+- El listener HTTPS se configura en EC2 > Load Balancers agregando `HTTPS:443`, usando certificado ACM y permitiendo `443` en el security group.
+- El health `https://api.aweshopmx.com/health` debe devolver `environment: "production"`.
 
 ## Frontend en Amplify
-- Conecta la rama `main` y usa el `amplify.yml` ya presente. Establece variables:
+- La app se despliega desde la rama `main` usando el `amplify.yml` del repo.
+- Variables necesarias en Amplify:
   - `AMPLIFY_MONOREPO_APP_ROOT=frontend`
   - `VITE_API_URL=https://api.aweshopmx.com`
-- Configura `Domain management` con `aweshopmx.com` y `www.aweshopmx.com`, creando los registros CNAME/ALIAS que Amplify provee en Route 53.
-- Bajo **Reescrituras y redireccionamientos** deja:
+- En `Domain management` deben existir:
+  - `aweshopmx.com` -> redirección a `https://www.aweshopmx.com`
+  - `www.aweshopmx.com` -> rama `main`
+
+## Reescrituras y redireccionamientos en Amplify
+- Usar estas reglas exactas:
   ```json
   [
-    {"source":"https://aweshopmx.com","status":"302","target":"https://www.aweshopmx.com"},
-    {"source":"/<*>","status":"200","target":"/index.html"}
+    {
+      "source": "https://aweshopmx.com",
+      "status": "302",
+      "target": "https://www.aweshopmx.com",
+      "condition": null
+    },
+    {
+      "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|mjs|png|svg|webp|avif|woff|woff2|ttf|map|json|txt|webmanifest)$)([^.]+$)/>",
+      "status": "200",
+      "target": "/index.html",
+      "condition": null
+    }
   ]
   ```
-- Esto asegura que rutas SPA (`/admin/...`) carguen `index.html`.
+- No usar una regla genérica `/<*> -> /index.html`, porque rompe los assets (`js` y `css`) y deja la pantalla en blanco.
 
-## Validaciones
-- En DevTools (Aplicación > Cookies) verifica que `ecom_access` existe con `Secure=true` y `SameSite=Lax` después del login.`/auth/me` debe responder 200. De no ser así, borra la cookie y vuelve a autenticar.
-- Las peticiones deben ir a `https://api.aweshopmx.com`; el frontend usa la variable `VITE_API_URL` definida en Amplify.
+## Validaciones de login/sesión
+- El login se hace en `https://www.aweshopmx.com/login`
+- La validación más confiable es:
+  - `POST /auth/login` responde `200`
+  - `GET /auth/me` responde `200`
+  - el usuario regresado tiene `role: "ADMIN"` cuando corresponde
+- En Firefox, aunque la cookie no siempre se vea claro en `Almacenamiento > Cookies`, si `/auth/me` responde `200` después del login entonces la sesión sí está persistiendo correctamente.
 
-## Scripts auxiliares
-- `backend/scripts/createAdmin.ts`: crea/upserta el usuario admin usando las variables `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Ejecutar:
+## Script para crear admin
+- Archivo: `backend/scripts/createAdmin.ts`
+- Uso:
   ```bash
   export ADMIN_EMAIL=admin@aweshopmx.com
   export ADMIN_PASSWORD='UnaClaveSegura123'
   npx tsx backend/scripts/createAdmin.ts
   ```
-- También puedes usar el script para resetear la contraseña y rol de un email ya existente.
+- El script hace upsert del usuario y asegura el rol `ADMIN`.
 
-## Siguientes pasos recomendados
-1. Valida que el login admin redirige a `/admin` y que todos los endpoints (`/auth/me`, `/products`, etc.) responden 200.
-2. Documenta este flujo en `README.md` (ya creado) y registra la nueva regla de reescritura/redirect en Amplify para futuras referencias.
+## Subida de imágenes / S3
+- El backend ya tiene soporte para S3 en código, pero la infraestructura todavía no quedó terminada.
+- Pendiente para otra sesión:
+  1. Crear bucket S3
+  2. Dar permisos IAM al rol de Elastic Beanstalk
+  3. Configurar variables `S3_BUCKET_NAME`, `AWS_REGION`, `S3_KEY_PREFIX`, etc.
+  4. Resolver por completo el flujo de upload y URL pública
+
+## Nota importante
+- Si el frontend vuelve a quedar en blanco y en DevTools los archivos `index-*.js` o `index-*.css` salen con MIME `text/html`, el problema casi seguro es la regla de reescritura de Amplify y no el código del frontend.
