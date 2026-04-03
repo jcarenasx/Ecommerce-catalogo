@@ -1,0 +1,30 @@
+[
+  {
+    "model": "SUDADERA-001",
+    "name": "Sudadera negra",
+    "sku": "SUD-001",
+    "size": "CH, M, G",
+    "color": "Negro",
+    "category": "Sudaderas",
+    "brand": "Marca propia",
+    "priceCents": 459900,
+    "images": [
+      "./images/sudadera-001-frente.jpg",
+      "./images/sudadera-001-espalda.jpg"
+    ],
+    "active": true,
+    "availabilityTag": "Disponible"
+  },
+  {
+    "model": "TENIS-021",
+    "name": "Tenis blancos",
+    "category": "Calzado",
+    "brand": "Linea urbana",
+    "priceCents": 899900,
+    "images": [
+      "https://cdn.ejemplo.com/catalogo/tenis-021-1.webp"
+    ],
+    "active": true,
+    "availabilityTag": "Ultimas piezas"
+  }
+]

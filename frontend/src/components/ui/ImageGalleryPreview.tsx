@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from "react";
+import { resolveMediaUrl } from "../../lib/media";
 
 type ImageGalleryPreviewProps = HTMLAttributes<HTMLDivElement> & {
   images: string[];
@@ -21,7 +22,11 @@ export default function ImageGalleryPreview({
           key={src}
           className="h-16 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white"
         >
-          <img src={src} alt="Galería del producto" className="h-full w-full object-cover" />
+          <img
+            src={resolveMediaUrl(src)}
+            alt="Galería del producto"
+            className="h-full w-full object-cover"
+          />
         </div>
       ))}
     </div>

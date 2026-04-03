@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { config } from "../config/index.js";
+import { env } from "../env.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
 import {
@@ -12,7 +12,7 @@ import { productsController } from "../controllers/productsController.js";
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: config.maxUploadBytes },
+  limits: { fileSize: env.S3_UPLOAD_MAX_BYTES },
 });
 
 router.get("/", productsController.list);

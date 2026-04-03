@@ -28,8 +28,9 @@ export function verifyAccessToken(token: string): JwtPayload {
 export function setAuthCookie(res: Response, token: string) {
   res.cookie(env.COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: env.COOKIE_SAME_SITE,
     secure: env.COOKIE_SECURE,
+    ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
     path: "/",
     maxAge: ACCESS_COOKIE_MAX_AGE_MS,
   });
@@ -38,8 +39,9 @@ export function setAuthCookie(res: Response, token: string) {
 export function clearAuthCookie(res: Response) {
   res.clearCookie(env.COOKIE_NAME, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: env.COOKIE_SAME_SITE,
     secure: env.COOKIE_SECURE,
+    ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
     path: "/",
   });
 }

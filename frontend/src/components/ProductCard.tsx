@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Product } from "../types";
 import { buildWhatsAppUrl } from "../lib/whatsapp";
+import { resolveMediaUrl } from "../lib/media";
 import Card from "./ui/Card";
 
 interface ProductProps {
@@ -31,26 +32,26 @@ export default function ProductCard({ product }: ProductProps) {
 
   const normalizedImages = useMemo(() => {
     const list = Array.isArray(product.images)
-      ? product.images.filter((item) => typeof item === "string" && item.trim() !== "")
+      ? product.images
+          .filter((item) => typeof item === "string" && item.trim() !== "")
+          .map(resolveMediaUrl)
       : [];
     return list.length > 0 ? list : [PLACEHOLDER_IMAGE];
   }, [product.images]);
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const normalizedImagesRef = useRef(normalizedImages);
   const touchStartX = useRef<number | null>(null);
   const modalTouchStartX = useRef<number | null>(null);
   const didSwipeRef = useRef(false);
 
   const hasMultipleImages = normalizedImages.length > 1;
-
-  useEffect(() => {
-    if (normalizedImagesRef.current === normalizedImages) return;
-    normalizedImagesRef.current = normalizedImages;
-    setCurrentImageIndex(0);
-  }, [normalizedImages]);
+  const currentImageSrc =
+    currentImage && normalizedImages.includes(currentImage)
+      ? currentImage
+      : normalizedImages[0];
+  const currentImageIndex = normalizedImages.indexOf(currentImageSrc);
 
   useEffect(() => {
     if (!isModalOpen) return undefined;
@@ -73,12 +74,14 @@ export default function ProductCard({ product }: ProductProps) {
   }, [isModalOpen]);
 
   const goNextImage = useCallback(() => {
-    setCurrentImageIndex((prev) => (prev + 1) % normalizedImages.length);
-  }, [normalizedImages.length]);
+    const nextIndex = (currentImageIndex + 1) % normalizedImages.length;
+    setCurrentImage(normalizedImages[nextIndex]);
+  }, [currentImageIndex, normalizedImages]);
 
   const goPrevImage = useCallback(() => {
-    setCurrentImageIndex((prev) => (prev - 1 + normalizedImages.length) % normalizedImages.length);
-  }, [normalizedImages.length]);
+    const prevIndex = (currentImageIndex - 1 + normalizedImages.length) % normalizedImages.length;
+    setCurrentImage(normalizedImages[prevIndex]);
+  }, [currentImageIndex, normalizedImages]);
 
   const handleTouchStart = useCallback((event: ReactTouchEvent<HTMLDivElement>) => {
     touchStartX.current = event.touches[0].clientX;
@@ -162,7 +165,7 @@ export default function ProductCard({ product }: ProductProps) {
           onTouchEnd={handleTouchEnd}
         >
           <img
-            src={normalizedImages[currentImageIndex]}
+            src={currentImageSrc}
             alt={displayName}
             loading="lazy"
             className="h-full w-full object-cover transition duration-300 ease-out md:group-hover:scale-110"
@@ -238,7 +241,7 @@ export default function ProductCard({ product }: ProductProps) {
               onTouchEnd={handleModalTouchEnd}
             >
               <img
-                src={normalizedImages[currentImageIndex]}
+                src={currentImageSrc}
                 alt={displayName}
                 className="h-full w-full object-contain"
                 loading="lazy"

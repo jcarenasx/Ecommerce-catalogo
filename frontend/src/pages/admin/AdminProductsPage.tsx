@@ -10,6 +10,7 @@ import { useAvailabilityTags } from "../../hooks/useAvailabilityTags";
 import { useAdminAvailabilityTags } from "../../hooks/useAdminAvailabilityTags";
 import { useProductCategories } from "../../hooks/useProductCategories";
 import type { Product, ProductInput } from "../../types";
+import { resolveMediaUrl } from "../../lib/media";
 import { uploadGalleryImages } from "../../services/mediaService";
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
@@ -397,7 +398,7 @@ export default function AdminProductsPage() {
         <p className="max-w-2xl text-sm text-stone-600">
           Controla los productos y enlaces de pago visibles para el público. Los
           campos vacíos se omiten en la tienda y las imágenes se almacenan en S3
-          mediante URLs firmadas.
+          con URLs listas para publicar.
         </p>
       </div>
 
@@ -858,7 +859,11 @@ export default function AdminProductsPage() {
                           key={url}
                           className="relative h-20 overflow-hidden rounded-3xl border border-stone-200 bg-stone-50"
                         >
-                          <img src={url} alt="Galería" className="h-full w-full object-cover" />
+                          <img
+                            src={resolveMediaUrl(url)}
+                            alt="Galería"
+                            className="h-full w-full object-cover"
+                          />
                           <button
                             type="button"
                             aria-label="Eliminar imagen"

@@ -2,11 +2,26 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 
 export const AUTH_EXPIRED_EVENT = "auth:expired";
+const LOCAL_API_URL = "http://localhost:4000";
 
-const FALLBACK_API_URL =
-  "http://ecommerce-api.eba-xvrmbgv4.us-east-1.elasticbeanstalk.com";
+function normalizeBaseUrl(value: string) {
+  return value.replace(/\/+$/g, "");
+}
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? FALLBACK_API_URL;
+function resolveApiBaseUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL?.trim();
+  if (configuredUrl) {
+    return normalizeBaseUrl(configuredUrl);
+  }
+
+  if (import.meta.env.DEV) {
+    return LOCAL_API_URL;
+  }
+
+  return normalizeBaseUrl(window.location.origin);
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 export class ApiError extends Error {
   status?: number;

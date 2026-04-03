@@ -61,7 +61,7 @@ export default function Home() {
       await registerCustomer({ name: name.trim(), phone: phone.trim() });
       window.localStorage.setItem(NOTIFICATION_KEY, "accepted");
       setShowModal(false);
-    } catch (error) {
+    } catch {
       setFormError("No se pudo guardar tu preferencia. Intenta de nuevo.");
     } finally {
       setIsSubmitting(false);

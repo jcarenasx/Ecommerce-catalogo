@@ -5,12 +5,16 @@ import {
   editProduct as editProductApi,
   removeProduct as deleteProductApi,
 } from "../api/admin";
+import { resolveMediaUrl } from "../lib/media";
 
 type ProductApiRecord = Partial<Product> & Pick<Product, "model">;
 
 function normalizeImageList(value?: string[] | null): string[] {
   if (!Array.isArray(value)) return [];
-  return value.map((item) => item.trim()).filter((item) => item.length > 0);
+  return value
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map(resolveMediaUrl);
 }
 
 function normalizeProduct(product: ProductApiRecord): Product {
