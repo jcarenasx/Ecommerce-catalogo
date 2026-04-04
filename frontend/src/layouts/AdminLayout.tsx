@@ -1,6 +1,28 @@
-import { Link, Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
+
+const adminNavItems = [
+  { to: "/admin/products", label: "Catalogo privado" },
+  { to: "/admin/availability", label: "Disponibilidad" },
+  { to: "/admin/customers", label: "Clientes" },
+] as const;
+
+function getNavLinkClassName(isActive: boolean, mobile = false) {
+  if (mobile) {
+    return [
+      "whitespace-nowrap rounded-full border px-3 py-2 text-sm font-medium transition",
+      isActive
+        ? "border-stone-900 bg-stone-900 text-white"
+        : "border-stone-300 bg-white text-stone-700 hover:border-stone-400",
+    ].join(" ");
+  }
+
+  return [
+    "rounded-xl px-4 py-3 text-sm font-medium transition",
+    isActive ? "bg-white text-stone-950" : "bg-white/10 hover:bg-white/15",
+  ].join(" ");
+}
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -21,18 +43,15 @@ export default function AdminLayout() {
           </p>
           <h1 className="mt-3 text-2xl font-semibold">Panel administrativo</h1>
           <nav className="mt-10 flex flex-col gap-2">
-            <Link
-              to="/admin/products"
-              className="rounded-xl bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15"
-            >
-              Catálogo privado
-            </Link>
-            <Link
-              to="/admin/availability"
-              className="rounded-xl bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15"
-            >
-              Etiquetas de disponibilidad
-            </Link>
+            {adminNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => getNavLinkClassName(isActive)}
+              >
+                {item.label}
+              </NavLink>
+            ))}
             <button
               type="button"
               onClick={() => {
@@ -52,12 +71,6 @@ export default function AdminLayout() {
                 {copyFeedback}
               </p>
             )}
-            <Link
-              to="/admin/customers"
-              className="rounded-xl bg-white/10 px-4 py-3 text-sm font-medium transition hover:bg-white/15"
-            >
-              Clientes
-            </Link>
           </nav>
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-medium text-white">{user?.email}</p>
@@ -93,6 +106,17 @@ export default function AdminLayout() {
                 Cerrar sesion
               </button>
             </div>
+            <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
+              {adminNavItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => getNavLinkClassName(isActive, true)}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
           </header>
 
           <main className="flex-1">
