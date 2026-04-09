@@ -20,7 +20,7 @@ export default function Navbar() {
               AweShop MX
             </Link>
             <p className="mt-1 text-sm text-white/60">
-              Seleccion de sneakers y accesorios.
+              Tenis, bolsas, ropa y accesorios.
             </p>
           </div>
         </div>
