@@ -1,4 +1,4 @@
-import type { Product, ProductInput } from "../types";
+import type { Product, ProductInput, ProductVariant } from "../types";
 import { fetchProducts, fetchProductBrands, fetchProductCategories } from "../api/products";
 import {
   createProduct as createProductApi,
@@ -17,6 +17,19 @@ function normalizeImageList(value?: string[] | null): string[] {
     .map(resolveMediaUrl);
 }
 
+function normalizeVariant(variant: Partial<ProductVariant> & Pick<ProductVariant, "id" | "label">): ProductVariant {
+  return {
+    id: variant.id,
+    label: variant.label?.trim() || variant.id,
+    color: variant.color ?? null,
+    size: variant.size ?? null,
+    sku: variant.sku ?? null,
+    images: normalizeImageList(variant.images),
+    priceCents: variant.priceCents ?? null,
+    active: variant.active ?? true,
+  };
+}
+
 function normalizeProduct(product: ProductApiRecord): Product {
   return {
     ...product,
@@ -33,6 +46,7 @@ function normalizeProduct(product: ProductApiRecord): Product {
     active: product.active ?? true,
     availabilityTag: product.availabilityTag ?? null,
     availabilityTagId: product.availabilityTagId ?? null,
+    variants: Array.isArray(product.variants) ? product.variants.map(normalizeVariant) : [],
     createdAt: product.createdAt ?? "",
     updatedAt: product.updatedAt ?? "",
   };

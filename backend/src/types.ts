@@ -9,6 +9,17 @@ export type Product = PrismaProduct;
 export type AvailabilityTag = PrismaAvailabilityTag;
 export type PublicUser = Omit<User, "passwordHash">;
 
+export type ProductVariantInput = {
+  id?: string | null;
+  label?: string | null;
+  size?: string | null;
+  color?: string | null;
+  sku?: string | null;
+  images?: string[] | null;
+  priceCents?: number | null;
+  active?: boolean;
+};
+
 export type ProductInput = {
   name?: string | null;
   size?: string | null;
@@ -23,4 +34,5 @@ export type ProductInput = {
   paymentLinkWithoutShipping?: string | null;
   active?: boolean;
   availabilityTagId?: string | null;
+  variants?: ProductVariantInput[] | null;
 };

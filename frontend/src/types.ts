@@ -23,6 +23,17 @@ export type AvailabilityTag = {
   updatedAt: string;
 };
 
+export type ProductVariant = {
+  id: string;
+  label: string;
+  color: string | null;
+  size: string | null;
+  sku: string | null;
+  images: string[];
+  priceCents: number | null;
+  active: boolean;
+};
+
 export type Product = {
   name: string;
   size: string | null;
@@ -38,6 +49,7 @@ export type Product = {
   active: boolean;
   availabilityTag?: AvailabilityTag | null;
   availabilityTagId?: string | null;
+  variants?: ProductVariant[];
   createdAt: string;
   updatedAt: string;
 };

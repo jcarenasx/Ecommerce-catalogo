@@ -4,6 +4,7 @@ import WhatsAppContactButton from "./components/WhatsAppContactButton";
 import { useAuth } from "./context/useAuth";
 import AdminLayout from "./layouts/AdminLayout";
 import Home from "./pages/Home";
+import NewArrivalsPage from "./pages/NewArrivalsPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminAvailabilityPage from "./pages/admin/AdminAvailabilityPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
@@ -33,11 +34,12 @@ function LoginRoute() {
 function App() {
   const { isLoading } = useAuth();
   const location = useLocation();
-  const isHomeRoute = location.pathname === "/home" || location.pathname === "/";
+  const isCatalogRoute =
+    location.pathname === "/home" || location.pathname === "/" || location.pathname === "/nuevo";
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      {isHomeRoute && <Navbar />}
+      {isCatalogRoute && <Navbar />}
       {isLoading ? (
         <main className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-4 py-10">
           <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -48,6 +50,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/nuevo" element={<NewArrivalsPage />} />
           <Route path="/login" element={<LoginRoute />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
@@ -60,7 +63,7 @@ function App() {
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       )}
-      {isHomeRoute && <WhatsAppContactButton />}
+      {isCatalogRoute && <WhatsAppContactButton />}
     </div>
   );
 }
